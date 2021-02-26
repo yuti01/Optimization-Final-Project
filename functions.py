@@ -5,7 +5,7 @@ We Are Actually Searching For The Point That Minimizes The Function (i.e. argmax
 import numpy as np
 
 
-def sum_of_distances(set_of_points, suggested_solution, weighted: bool = False):
+def sum_of_distances(set_of_points, suggested_solution, weighted: bool = True):
     """
     Get the value of the function we are trying to minimize.
     :param set_of_points: The set of points (weight included)
@@ -13,7 +13,7 @@ def sum_of_distances(set_of_points, suggested_solution, weighted: bool = False):
     :param suggested_solution: The suggested solution point
                                (Note: there is no weight in the solution point).
     :param weighted: A boolean flag.
-                     - If set to True, we are considering the third coordinate as the weight of the point.
+                     - If set to True (default), we are considering the third coordinate as the weight of the point.
                      This is the function we are minimizing in the Weber's Problem.
 
                      - If set to False, we are expecting an un-weighted set of points.
