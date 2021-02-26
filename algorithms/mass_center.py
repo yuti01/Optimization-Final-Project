@@ -14,10 +14,7 @@ def calculate_mass_center(set_of_points) -> tuple:
 
     # we distinguish between np.ndarray and other iterable types
     # for faster calculation on large point sets
-    if type(set_of_points) == np.ndarray:
-        x, y = tuple(np.mean(set_of_points, axis=0))
-    else:
-        x = np.mean([point[0] for point in set_of_points])
-        y = np.mean([point[1] for point in set_of_points])
+    if type(set_of_points) != np.ndarray:
+        set_of_points = np.array(set_of_points)
 
-    return x, y
+    return tuple(np.mean(set_of_points, axis=0))

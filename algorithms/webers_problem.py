@@ -11,11 +11,16 @@ def solve_webers_problem(set_of_points):
     """
     # define the target function
     T = lambda x: F.sum_of_distances(set_of_points, x, weighted=True)
+
+    # initialize the simplex
     simplex = _init_simplex()
 
-    while not _should_stop():
+    last_simplex = np.copy(simplex)
+
+    while True:
         # sort the simplex
         simplex = _sort_simplex_points(set_of_points, simplex)
+
         centroid = _centroid(simplex)
 
         # update the simplex
@@ -60,7 +65,15 @@ def solve_webers_problem(set_of_points):
             else:
                 simplex = _shrink(simplex)
 
-    return _centroid(simplex)
+        # stopping condition
+        if np.array_equal(simplex, last_simplex):
+            break
+        else:
+            print(simplex)
+
+        last_simplex = np.copy(simplex)
+
+    return _sort_simplex_points(set_of_points, simplex)[0]
 
 
 """
@@ -76,9 +89,14 @@ beta = 2
 gamma = 0.5
 delta = 0.5
 
+"""
+stopping parameter
+"""
+epsilon = 1e-1
+
 
 def _init_simplex():
-    return np.array([])
+    return np.array([[1, 1], [1, 2], [1, 3]], dtype="float")
 
 
 def _should_stop():
@@ -92,7 +110,7 @@ def _sort_simplex_points(problem_points, simplex_points):
     :param simplex_points: The simplex set of points.
     :return: The simplex set of points sorted by the value of the target function.
     """
-    return sorted(simplex_points, key=lambda point: F.sum_of_distances(problem_points, point))
+    return np.array(sorted(simplex_points, key=lambda point: F.sum_of_distances(problem_points, point)))
 
 
 def _centroid(set_of_points) -> np.ndarray:
@@ -101,8 +119,7 @@ def _centroid(set_of_points) -> np.ndarray:
     :param set_of_points: The set of points to calculate the centroid of.
     :return: The centroid of points i.e. the point with the mean (average) coordinates.
     """
-    # this is actually the same as the mass center so we will use our implementation of it
-    return np.array(calculate_mass_center(set_of_points))
+    return np.mean(set_of_points)
 
 
 def _reflection_point(point, centroid) -> np.ndarray:
