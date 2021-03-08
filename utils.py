@@ -84,3 +84,13 @@ article_data_set = np.array([
     (10, 5, 2),  # 29
     (10, 9, 1)  # 30
 ])
+
+
+def print_simplex(simplex, target_function=None):
+    if target_function is None:
+        target_function = lambda x: ''
+
+    for point in simplex:
+        print(point, target_function(point))
+
+    print()

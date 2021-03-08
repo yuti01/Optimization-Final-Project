@@ -1,6 +1,27 @@
 import numpy as np
 import functions as F
+from utils import print_simplex
+
 from algorithms.mass_center import calculate_mass_center
+
+
+"""
+Nelder-Mead Hyper-Parameters:
+
+alpha - coefficients of reflection.
+beta - expansion.
+gamma - contraction.
+delta - shrink.
+"""
+alpha = 1
+beta = 2
+gamma = 0.5
+delta = 0.5
+
+"""
+stopping parameter
+"""
+epsilon = 1e-1
 
 
 def solve_webers_problem(set_of_points):
@@ -13,7 +34,8 @@ def solve_webers_problem(set_of_points):
     T = lambda x: F.sum_of_distances(set_of_points, x, weighted=True)
 
     # initialize the simplex
-    simplex = _init_simplex()
+    simplex = _init_simplex(set_of_points)
+    print_simplex(simplex, T)
 
     last_simplex = np.copy(simplex)
 
@@ -21,7 +43,9 @@ def solve_webers_problem(set_of_points):
         # sort the simplex
         simplex = _sort_simplex_points(set_of_points, simplex)
 
-        centroid = _centroid(simplex)
+        print_simplex(simplex, T)
+
+        centroid = _centroid(set_of_points, simplex)
 
         # update the simplex
 
@@ -32,6 +56,7 @@ def solve_webers_problem(set_of_points):
         if T(simplex[0]) <= T(reflection_point) <= T(simplex[-2]):
             # replace the worst point with the reflection point
             simplex[-1] = reflection_point
+            print("changing the worst point with the reflection point")
 
         # 2. Expansion
         elif T(reflection_point) < T(simplex[0]):
@@ -68,39 +93,55 @@ def solve_webers_problem(set_of_points):
         # stopping condition
         if np.array_equal(simplex, last_simplex):
             break
-        else:
-            print(simplex)
 
         last_simplex = np.copy(simplex)
 
     return _sort_simplex_points(set_of_points, simplex)[0]
 
 
-"""
-Nelder-Mead Hyper-Parameters:
+"""def _init_simplex(problem_points):
+    simplex_points = list()
+    taken_indexes = set()
 
-alpha - coefficients of reflection.
-beta - expansion.
-gamma - contraction.
-delta - shrink.
-"""
-alpha = 1
-beta = 2
-gamma = 0.5
-delta = 0.5
+    dimension = len(problem_points[0]) - 1
+    number_of_points = len(problem_points)
 
-"""
-stopping parameter
-"""
-epsilon = 1e-1
+    assert dimension + 1 <= number_of_points, "our initialization method assumes that the number of " \
+                                              "points given with the problem is larger than the problem's dimension."
 
+    while len(simplex_points) < dimension + 1:
+        while True:
+            random_index = np.random.randint(low=0, high=number_of_points)
 
-def _init_simplex():
-    return np.array([[1, 1], [1, 2], [1, 3]], dtype="float")
+            if random_index not in taken_indexes:
+                taken_indexes.add(random_index)
+                break
 
+        simplex_points.append(problem_points[random_index][:2])
 
-def _should_stop():
-    return True
+    return np.array(simplex_points, dtype="float")"""
+
+def _init_simplex(problem_points):
+    points = problem_points[:, :2]
+
+    simplex_points = list()
+
+    dimension = len(points[0])
+    number_of_points = len(points)
+
+    random_index = np.random.randint(low=0, high=number_of_points)
+    random_point = points[random_index]
+
+    simplex_points.append(random_point)
+
+    h = np.array([0.05 if x != 0 else 0.00025 for x in random_point])
+    e = np.identity(dimension)
+
+    for j in range(0, dimension):
+        point = random_point + h[j]*e[j]
+        simplex_points.append(point)
+
+    return np.array(simplex_points, dtype="float")
 
 
 def _sort_simplex_points(problem_points, simplex_points):
@@ -113,13 +154,15 @@ def _sort_simplex_points(problem_points, simplex_points):
     return np.array(sorted(simplex_points, key=lambda point: F.sum_of_distances(problem_points, point)))
 
 
-def _centroid(set_of_points) -> np.ndarray:
+def _centroid(set_of_points, simplex_points) -> np.ndarray:
     """
     Calculate the centroid of points i.e. the point with the mean (average) coordinates.
     :param set_of_points: The set of points to calculate the centroid of.
     :return: The centroid of points i.e. the point with the mean (average) coordinates.
     """
-    return np.mean(set_of_points)
+    sorted_points = _sort_simplex_points(set_of_points, simplex_points)[:-1]
+
+    return np.mean(sorted_points)
 
 
 def _reflection_point(point, centroid) -> np.ndarray:
@@ -151,7 +194,7 @@ def _expansion_point(point, centroid) -> np.ndarray:
     if type(centroid) != np.ndarray:
         centroid = np.array(centroid)
 
-    return beta * point - (1 - beta) * centroid
+    return beta * point - ((1 - beta) * centroid)
 
 
 def _outside_contraction_point(point, centroid) -> np.ndarray:
@@ -192,7 +235,7 @@ def _shrink(simplex_points):
     :param simplex_points: Simplex before shrinking.
     :return: Shrinked simplex.
     """
-    for i in range(2, len(simplex_points)):
+    for i in range(1, len(simplex_points)):
         simplex_points[i] = _shrink_point(simplex_points[i], simplex_points[0])
 
     return simplex_points
