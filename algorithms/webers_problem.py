@@ -21,7 +21,7 @@ delta = 0.5
 """
 stopping parameter
 """
-epsilon = 1e-1
+epsilon = 1e-10
 
 
 def solve_webers_problem(set_of_points):
@@ -56,7 +56,6 @@ def solve_webers_problem(set_of_points):
         if T(simplex[0]) <= T(reflection_point) <= T(simplex[-2]):
             # replace the worst point with the reflection point
             simplex[-1] = reflection_point
-            # print("changing the worst point with the reflection point")
 
         # 2. Expansion
         elif T(reflection_point) < T(simplex[0]):
@@ -91,12 +90,12 @@ def solve_webers_problem(set_of_points):
                 simplex = _shrink(simplex)
 
         # stopping condition
-        if np.array_equal(simplex, last_simplex):
+        if _should_stop(last_simplex, simplex):
             break
 
-        last_simplex = np.copy(simplex)
+        last_simplex = simplex
 
-    return _sort_simplex_points(set_of_points, simplex)[0]
+    return _best_point(simplex, T)
 
 
 """def _init_simplex(problem_points):
@@ -121,6 +120,7 @@ def solve_webers_problem(set_of_points):
 
     return np.array(simplex_points, dtype="float")"""
 
+
 def _init_simplex(problem_points):
     points = problem_points[:, :2]
 
@@ -144,6 +144,12 @@ def _init_simplex(problem_points):
     return np.array(simplex_points, dtype="float")
 
 
+def _should_stop(prev_simplex, current_simplex):
+    stopping_sum = 0.5 * np.sum([(np.linalg.norm(p1 - p2)**2) for p1, p2 in zip(prev_simplex, current_simplex)])
+
+    return stopping_sum < epsilon
+
+
 def _sort_simplex_points(problem_points, simplex_points):
     """
     Sort the points of the simplex by the value of the target function.
@@ -152,6 +158,12 @@ def _sort_simplex_points(problem_points, simplex_points):
     :return: The simplex set of points sorted by the value of the target function.
     """
     return np.array(sorted(simplex_points, key=lambda point: F.sum_of_distances(problem_points, point)))
+
+
+def _best_point(simplex_points, target_function):
+    best_point_index = np.argmin([target_function(point) for point in simplex_points])
+
+    return simplex_points[best_point_index]
 
 
 def _centroid(set_of_points, simplex_points) -> np.ndarray:
