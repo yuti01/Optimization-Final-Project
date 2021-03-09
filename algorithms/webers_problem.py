@@ -56,7 +56,7 @@ def solve_webers_problem(set_of_points):
         if T(simplex[0]) <= T(reflection_point) <= T(simplex[-2]):
             # replace the worst point with the reflection point
             simplex[-1] = reflection_point
-            print("changing the worst point with the reflection point")
+            # print("changing the worst point with the reflection point")
 
         # 2. Expansion
         elif T(reflection_point) < T(simplex[0]):
@@ -162,7 +162,7 @@ def _centroid(set_of_points, simplex_points) -> np.ndarray:
     """
     sorted_points = _sort_simplex_points(set_of_points, simplex_points)[:-1]
 
-    return np.mean(sorted_points)
+    return np.mean(sorted_points, axis=0)
 
 
 def _reflection_point(point, centroid) -> np.ndarray:
